@@ -87,7 +87,14 @@ def main() -> int:
             print("\n`qrcode` not installed (pip install qrcode); paste the JSON above into any QR generator.",
                   file=sys.stderr)
             return 1
-        qrcode.make(json.dumps(payload)).save(args.out)
+        img_data = json.dumps(payload)
+        try:
+            qrcode.make(img_data).save(args.out)
+        except ImportError:  # PNG output needs PIL; fall back to dependency-free SVG
+            import qrcode.image.svg
+            out = args.out if args.out.endswith(".svg") else args.out + ".svg"
+            qrcode.make(img_data, image_factory=qrcode.image.svg.SvgImage).save(out)
+            args.out = out
         print(f"\nwrote {args.out}")
     return 0
 
